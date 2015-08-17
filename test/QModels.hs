@@ -5,7 +5,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit
 import PCA.QModels
 import PCA.Distribution
-import Numeric.LinearAlgebra.Data (fromRows, toRows)
+import Numeric.LinearAlgebra.Data (fromRows, toRows, size)
 import qualified Numeric.LinearAlgebra.HMatrix as H
 
 
@@ -25,12 +25,16 @@ unitTests =
                 mu = initQmu d
                 alpha = initQalpha d
                 w = initQW d
-                sigmaX = calcSigmaX tau w
             step "Test calculation of Q"
+            let sigmaX = calcSigmaX d tau w
+            assertEqual "Size of Sigma_X must dxd" (size sigmaX) (d,d)
+            let mX = calcMX trainT tau sigmaX w mu
             assertEqual
                 "Fool impl and matrix impl must give the same result"
-                (calcMX trainT tau sigmaX w mu)
+                mX
                 (foolCalcMX trainT tau sigmaX w mu)
+            let sigmaMu = calcSigmaMu n tau mu
+            assertEqual "Size of Sigma_Mu is dxd" (size sigmaMu) (d,d)
 
 
 foolCalcMX trainT tau sigmaX w mu =
