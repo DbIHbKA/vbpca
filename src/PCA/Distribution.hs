@@ -20,6 +20,12 @@ data instance
      Distr (Vector Double) (Matrix Double) = MNormal (Vector Double)
                                                      (Matrix Double)
 
+
+data instance
+     Distr (Matrix Double) (Matrix Double) = MatrixMNormal (Matrix
+                                                              Double)
+                                                           (Matrix Double)
+
 class Mean m v where
     mean :: Distr m v -> m
 
@@ -30,4 +36,14 @@ instance Mean (Vector Double) (Vector Double) where
     mean (MGamma s r) = s / r
 
 instance Mean (Vector Double) (Matrix Double) where
-  mean (MNormal m v) = m
+    mean (MNormal m v) = m
+
+instance Mean (Matrix Double) (Matrix Double) where
+    mean (MatrixMNormal m v) = m
+
+
+class Variance m v  where
+    variance :: Distr m v -> v
+
+instance Variance (Matrix Double) (Matrix Double) where
+    variance (MatrixMNormal m v) = v
