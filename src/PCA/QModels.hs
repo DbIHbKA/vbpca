@@ -69,3 +69,21 @@ calcSigmaMu n tau mu =
   where
     vMu = variance mu
     (_,d) = size vMu
+
+calcMMu
+    :: Matrix Double
+    -> Distr Double Double
+    -> Matrix Double
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Vector Double
+calcMMu trainT tau sigmaMu w x =
+    (mean tau `H.scale` sigmaMu) H.#>
+    foldr
+         (flip (+))
+         (konst 0 d)
+         (toRows (trainT - H.tr (mW H.<> H.tr mX)))
+  where
+    mW = mean w
+    mX = mean x
+    (_, d) = size trainT
