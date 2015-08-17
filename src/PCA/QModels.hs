@@ -3,7 +3,7 @@ module PCA.QModels where
 
 import PCA.Distribution
 import Numeric.LinearAlgebra.Data
-       (Matrix, Vector, ident, konst, size, toRows, fromRows)
+       (Matrix, Vector, ident, konst, size, toRows, fromRows, diag, diagl)
 import qualified Numeric.LinearAlgebra.HMatrix as H
 
 
@@ -20,7 +20,7 @@ initQW :: Int -> Distr (Matrix Double) (Matrix Double)
 initQW d = MatrixMNormal (ident d) (ident d)
 
 initQX :: Matrix Double -> Distr (Matrix Double) (Matrix Double)
-initQX trainT = let (n, d) = size trainT
+initQX trainT = let (_, d) = size trainT
                     sigmaX = calcSigmaX d initQtau (initQW d)
                     mX = calcMX trainT initQtau sigmaX (initQW d) (initQmu d)
                 in MatrixMNormal mX sigmaX
@@ -87,3 +87,18 @@ calcMMu trainT tau sigmaMu w x =
     mW = mean w
     mX = mean x
     (_, d) = size trainT
+
+
+calcSigmaW
+    ::  Distr Double Double
+    -> Distr (Vector Double) (Vector Double)
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Matrix Double
+calcSigmaW tau alpha x =
+    H.inv
+        (diag (mean alpha) +
+         mean tau `H.scale`
+         (fromIntegral n `H.scale` variance x + H.tr mX H.<> mX))
+  where
+    mX = mean x
+    (n,_) = size mX
