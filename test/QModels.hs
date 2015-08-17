@@ -1,9 +1,11 @@
-
+{-# LANGUAGE FlexibleContexts #-}
 module QModels where
 
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit
 import PCA.QModels
+import PCA.Distribution
+import Numeric.LinearAlgebra.Data (fromRows, toRows)
 import qualified Numeric.LinearAlgebra.HMatrix as H
 
 
@@ -29,3 +31,13 @@ unitTests =
                 "Fool impl and matrix impl must give the same result"
                 (calcMX trainT tau sigmaX w mu)
                 (foolCalcMX trainT tau sigmaX w mu)
+
+
+foolCalcMX trainT tau sigmaX w mu =
+    fromRows
+        (map
+             (\r ->
+                   coef H.#> (r - mean mu))
+             (toRows trainT))
+  where
+    coef = mean tau `H.scale` sigmaX H.<> H.tr (mean w)
