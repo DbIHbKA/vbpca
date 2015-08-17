@@ -58,17 +58,3 @@ calcMX trainT tau sigmaX w mu =
                              r - mean mu)
                        (toRows trainT))))
 
-foolCalcMX
-    :: Matrix Double
-    -> Distr Double Double
-    -> Matrix Double
-    -> Distr (Matrix Double) (Matrix Double)
-    -> Distr (Vector Double) (Matrix Double)
-    -> Matrix Double
-foolCalcMX trainT tau sigmaX w mu =
-    fromRows
-        (map
-             (\r ->
-                   (mean tau `H.scale` sigmaX H.<> H.tr (mean w)) H.#>
-                   (r - mean mu))
-             (toRows trainT))
