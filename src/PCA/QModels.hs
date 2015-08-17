@@ -20,8 +20,8 @@ initQW :: Int -> Distr (Matrix Double) (Matrix Double)
 initQW d = MatrixMNormal (ident d) (ident d)
 
 initQX :: Matrix Double -> Distr (Matrix Double) (Matrix Double)
-initQX trainT = let (_, d) = size trainT
-                    sigmaX = calcSigmaX initQtau (initQW d)
+initQX trainT = let (n, d) = size trainT
+                    sigmaX = calcSigmaX d initQtau (initQW d)
                     mX = calcMX trainT initQtau sigmaX (initQW d) (initQmu d)
                 in MatrixMNormal mX sigmaX
 
@@ -32,14 +32,15 @@ calculateQ trainT = undefined
     -- go 20 initQtau (initQmu d) (initQalpha d) (initQW d) (initQX trainT)
 
 
-calcSigmaX :: Distr Double Double
-           -> Distr (Matrix Double) (Matrix Double)
-           -> Matrix Double
-calcSigmaX tau w = H.inv (ident d + mean tau `H.scale` wSquareMean)
+calcSigmaX
+    :: Int
+    -> Distr Double Double
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Matrix Double
+calcSigmaX d tau w = H.inv (ident d + mean tau `H.scale` wSquareMean)
   where
     mW = mean w
     wSquareMean = variance w + (H.tr mW H.<> mW)
-    (_,d) = size mW
 
 calcMX
     :: Matrix Double
@@ -58,3 +59,13 @@ calcMX trainT tau sigmaX w mu =
                              r - mean mu)
                        (toRows trainT))))
 
+calcSigmaMu
+    :: Int
+    -> Distr Double Double
+    -> Distr (Vector Double) (Matrix Double)
+    -> Matrix Double
+calcSigmaMu n tau mu =
+    vMu + 1 / (fromIntegral n * mean tau) `H.scale` ident d
+  where
+    vMu = variance mu
+    (_,d) = size vMu
