@@ -46,6 +46,6 @@ class Variance m v  where
     variance :: Distr m v -> v
 
 instance Variance (Vector Double) (Matrix Double) where
-  variance (MNormal m v) = v
+    variance (MNormal m v) = v
 instance Variance (Matrix Double) (Matrix Double) where
     variance (MatrixMNormal m v) = v
