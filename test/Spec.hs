@@ -1,2 +1,9 @@
+import Test.Tasty
+
+import qualified QModels as QM
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "PCA Tests" [QM.tests]
