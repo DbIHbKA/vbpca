@@ -19,8 +19,8 @@ unitTests =
     testCaseSteps "Tests for Q model calculation" $
     \step ->
          do step "Preparing..."
-            let n = 1000
-                d = 30
+            let n = 10
+                d = 3
             trainT <- H.rand n d
             let tau = initQtau
                 mu = initQmu d
@@ -34,7 +34,7 @@ unitTests =
                 "Fool impl and matrix impl must give the same result"
                 mX
                 (foolCalcMX trainT tau sigmaX w mu)
-            assertEqual "Size of mean X is Nxd" (size mX) (n,d)
+            assertEqual "Size of mean X is Nxd" (size mX) (n, d)
             let x = MatrixMNormal mX sigmaX
             let sigmaMu = calcSigmaMu n tau mu
             assertEqual "Size of Sigma_Mu is dxd" (size sigmaMu) (d, d)
@@ -44,6 +44,12 @@ unitTests =
                 "Fool impl and matrix impl must give the same result"
                 mMu
                 (foolCalcMMu trainT tau sigmaMu w x)
+            let sigmaW = calcSigmaWM tau alpha x
+            assertEqual "Size of sigma_W is dxd" (size sigmaW) (d,d)
+            assertEqual
+                "Fool impl and matrix impl must give the same result"
+                (foolCalcSigmaW tau alpha x)
+                sigmaW
 
 
 foolCalcMX trainT tau sigmaX w mu =
@@ -58,11 +64,25 @@ foolCalcMX trainT tau sigmaX w mu =
 foolCalcMMu trainT tau sigmaMu w x =
     (mean tau `H.scale` sigmaMu) H.#>
     foldr
-         (\r resV ->
-               resV + ((trainT ! r) - mW H.#> (mX ! r)))
-         (konst 0 d)
-         [0 .. (n - 1)]
+        (\r resV ->
+              resV + ((trainT ! r) - mW H.#> (mX ! r)))
+        (konst 0 d)
+        [0 .. (n - 1)]
   where
     mW = mean w
     mX = mean x
     (n,d) = size trainT
+
+foolCalcSigmaW tau alpha x =
+    H.inv
+        (H.diag (mean alpha) +
+         mean tau `H.scale`
+         (foldr
+              (\r resM ->
+                    resM + variance x + r `H.outer` r)
+              (H.diagl [0 | _ <- [1 .. d]])
+              (toRows mX)))
+  where
+    mX = mean x
+    (_,d) = size mX
+
