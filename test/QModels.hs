@@ -31,7 +31,7 @@ unitTests =
             assertEqual "Size of Sigma_X must dxd" (size sigmaX) (d, d)
             let mX = calcMX trainT tau sigmaX w mu
             assertEqual
-                "Fool impl and matrix impl must give the same result"
+                "Fool impl and matrix impl of calcMX must give the same result"
                 mX
                 (foolCalcMX trainT tau sigmaX w mu)
             assertEqual "Size of mean X is Nxd" (size mX) (n, d)
@@ -41,26 +41,29 @@ unitTests =
             let mMu = calcMMu trainT tau sigmaMu w x
             assertEqual "Size of m_Mu is 1xd" (size mMu) d
             assertEqual
-                "Fool impl and matrix impl must give the same result"
+                "Fool impl and matrix impl of calcMMu must give the same result"
                 mMu
                 (foolCalcMMu trainT tau sigmaMu w x)
             let sigmaW = calcSigmaW tau alpha x
             assertEqual "Size of sigma_W is dxd" (size sigmaW) (d, d)
-            assertEqual
-                "Fool impl and matrix impl must give the same result"
-                (foolCalcSigmaW tau alpha x)
-                sigmaW
+            assertBool
+                "Fool impl and matrix impl of calcSigmaW must give the same result"
+                (H.maxElement (foolCalcSigmaW tau alpha x - sigmaW) < 0.001)
             let mW = calcMW tau sigmaW x trainT mu
             assertEqual "Size of m_W is dxd" (size mW) (d, d)
-            assertEqual
+            assertBool
                 "Fool impl and matrix impl of calcMW must give the same result"
-                (foolCalcMW tau sigmaW x trainT mu)
-                mW
-            let bAlpha = calcBalpha (konst 0.001 d) w
+                (H.maxElement (foolCalcMW tau sigmaW x trainT mu - mW) < 0.001)
+            let bAlpha = calcBalpha (konst 1.0e-3 d) w
             assertEqual "Size of b_alpha is d" (size bAlpha) d
-            assertEqual "Fool impl and matrix impl of calcBalpha must give the same result" (foolCalcBalpha (konst 0.001 d) w) bAlpha
-            let bTau = calcBtau 0.001 trainT mu w x
-            assertEqual "Fool impl and matrix impl of calcBtau must give the same result" (foolCalcBtau 0.001 trainT mu w x) bTau
+            assertEqual
+                "Fool impl and matrix impl of calcBalpha must give the same result"
+                (foolCalcBalpha (konst 1.0e-3 d) w)
+                bAlpha
+            let bTau = calcBtau 1.0e-3 trainT mu w x
+            assertBool
+                "Fool impl and matrix impl of calcBtau must give the same result"
+                (abs (foolCalcBtau 1.0e-3 trainT mu w x) - bTau < 0.001)
 
 
 foolCalcMX trainT tau sigmaX w mu =
