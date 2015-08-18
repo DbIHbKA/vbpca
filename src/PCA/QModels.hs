@@ -29,8 +29,22 @@ initQX trainT = let (_, d) = size trainT
 type QModel = (Matrix Double, Vector Double)  -- ^ Mode of W and \mu
 
 calculateQ :: Matrix Double -> QModel
-calculateQ trainT = undefined
-    -- go 20 initQtau (initQmu d) (initQalpha d) (initQW d) (initQX trainT)
+calculateQ trainT =
+    go 5 initQtau (initQmu d) (initQalpha d) (initQW d) (initQX trainT) trainT
+  where
+    (n,d) = size trainT
+    go 0 _ mu _ w _ _ = (mean w, mean mu)
+    go k (Gamma aTau bTau) mu (MGamma aAlpha bAlpha) w x t =
+        go (k - 1) ntau nmu nalpha nw nx t
+      where
+        ntau = Gamma (calcAtau n d aTau) (calcBtau bTau t mu w x)
+        nalpha = MGamma (calcAalpha d aAlpha) (calcBalpha bAlpha w)
+        nSigmaMu = calcSigmaMu n ntau mu
+        nmu = MNormal (calcMMu t ntau nSigmaMu w x) nSigmaMu
+        nSigmaW = calcSigmaW ntau nalpha x
+        nw = MatrixMNormal (calcMW ntau nSigmaW x t nmu) nSigmaW
+        nSigmaX = calcSigmaX d ntau nw
+        nx = MatrixMNormal (calcMX t ntau nSigmaX nw nmu) nSigmaX
 
 
 calcSigmaX
