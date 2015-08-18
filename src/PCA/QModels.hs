@@ -3,7 +3,8 @@ module PCA.QModels where
 
 import PCA.Distribution
 import Numeric.LinearAlgebra.Data
-       (Matrix, Vector, ident, konst, size, toRows, fromRows, diag, diagl)
+       (Matrix, Vector, ident, konst, size, toRows, fromRows, diag, diagl,
+        takeDiag)
 import qualified Numeric.LinearAlgebra.HMatrix as H
 
 
@@ -90,7 +91,7 @@ calcMMu trainT tau sigmaMu w x =
 
 
 calcSigmaW
-    ::  Distr Double Double
+    :: Distr Double Double
     -> Distr (Vector Double) (Vector Double)
     -> Distr (Matrix Double) (Matrix Double)
     -> Matrix Double
@@ -102,3 +103,45 @@ calcSigmaW tau alpha x =
   where
     mX = mean x
     (n,_) = size mX
+
+calcMW
+    :: Distr Double Double
+    -> Matrix Double
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Matrix Double
+    -> Distr (Vector Double) (Matrix Double)
+    -> Matrix Double
+calcMW tau sigmaW x trainT mu =
+    (mean tau `H.scale` sigmaW) H.<>
+    (H.tr mX H.<>
+     (fromRows
+          (map
+               (\tn ->
+                     tn - mMu)
+               (toRows trainT))))
+  where
+    mX = mean x
+    mMu = mean mu
+
+
+calcAalpha :: Int -> Vector Double -> Vector Double
+calcAalpha d = H.cmap (+ fromIntegral d / 2)
+
+calcBalpha :: Vector Double
+           -> Distr (Matrix Double) (Matrix Double)
+           -> Vector Double
+calcBalpha b w = b + 0.5 `H.scale` (takeDiag (H.tr mW H.<> mW))
+  where
+    mW = mean w
+
+calcAtau :: Int -> Int -> Double -> Double
+calcAtau n d a = a + fromIntegral (n * d) / 2
+
+calcBtau :: Double -> Matrix Double -> Distr (Vector Double) (Matrix Double) -> Distr (Matrix Double) (Matrix Double) -> Distr (Matrix Double) (Matrix Double) -> Double
+calcBtau b trainT mu w x = b + 0.5 * (fromIntegral n * norm mMu + H.sumElements (takeDiag (trainT H.<> H.tr trainT)) + 2 * (H.sumElements (H.tr (mW H.<> H.tr mX) H.#> mMu)) - 2 * (H.sumElements (takeDiag (trainT H.<> mW H.<> H.tr mX))) - 2 * (H.sumElements (trainT H.#> mMu)))
+  where
+    (n,_) = size trainT
+    norm v = v `H.dot` v
+    mMu = mean mu
+    mW = mean w
+    mX = mean x
