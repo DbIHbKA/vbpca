@@ -137,8 +137,25 @@ calcBalpha b w = b + 0.5 `H.scale` (takeDiag (H.tr mW H.<> mW))
 calcAtau :: Int -> Int -> Double -> Double
 calcAtau n d a = a + fromIntegral (n * d) / 2
 
-calcBtau :: Double -> Matrix Double -> Distr (Vector Double) (Matrix Double) -> Distr (Matrix Double) (Matrix Double) -> Distr (Matrix Double) (Matrix Double) -> Double
-calcBtau b trainT mu w x = b + 0.5 * (fromIntegral n * norm mMu + H.sumElements (takeDiag (trainT H.<> H.tr trainT)) + 2 * (H.sumElements (H.tr (mW H.<> H.tr mX) H.#> mMu)) - 2 * (H.sumElements (takeDiag (trainT H.<> mW H.<> H.tr mX))) - 2 * (H.sumElements (trainT H.#> mMu)))
+
+-- | TODO: Formula is not correct.
+-- Skip part Tr (\langle W^TW \rangle \langle x_n x^T_n 'rangle')
+-- because i think it is not correct in that result must be number
+calcBtau
+    :: Double
+    -> Matrix Double
+    -> Distr (Vector Double) (Matrix Double)
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Distr (Matrix Double) (Matrix Double)
+    -> Double
+calcBtau b trainT mu w x =
+    b +
+    0.5 *
+    (fromIntegral n * norm mMu +
+     H.sumElements (takeDiag (trainT H.<> H.tr trainT)) +
+     2 * (H.sumElements (H.tr (mW H.<> H.tr mX) H.#> mMu)) -
+     2 * (H.sumElements (takeDiag (trainT H.<> mW H.<> H.tr mX))) -
+     2 * (H.sumElements (trainT H.#> mMu)))
   where
     (n,_) = size trainT
     norm v = v `H.dot` v
